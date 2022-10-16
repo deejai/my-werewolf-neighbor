@@ -3,7 +3,6 @@ import config
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
 
-
 def fall(obj, world):
     obj.y_velocity += config.GRAVITY
 

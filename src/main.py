@@ -3,7 +3,6 @@ import pygame
 import sys
 
 import config
-from gameobjects import Player, Platform
 from world import World
 
 pygame.init()

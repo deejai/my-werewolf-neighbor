@@ -3,7 +3,10 @@ import pygame
 import random
 
 import config
-from gameobjects import Player, Platform, Scenery, Citizen, Building
+from gameobjects.base import Platform
+from gameobjects.citizen import Citizen
+from gameobjects.scenery import Scenery, Building
+from gameobjects.player import Player
 
 ground_level = 150
 
@@ -64,7 +67,7 @@ class World:
         pygame.mixer.Channel(2).stop()
         pygame.mixer.Channel(3).stop()
 
-        self.change_music("assets/audio/bg_night.wav", 0.1)
+        self.change_music(config.ROOT_DIR + "assets/audio/bg_night.wav", 0.1)
 
         self.active_objects = [self.player]
 
@@ -83,7 +86,7 @@ class World:
 
         self.citizen_scared_sounds = []
         # add each file in the assets/sounds/citizen_scared folder to the list
-        folder = "assets/audio/citizen_scared/"
+        folder = config.ROOT_DIR + "assets/audio/citizen_scared/"
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
@@ -94,7 +97,7 @@ class World:
 
         self.citizen_gossip_sounds = []
         # add each file in the assets/sounds/citizen_gossip folder to the list
-        folder = "assets/audio/citizen_gossip/"
+        folder = config.ROOT_DIR + "assets/audio/citizen_gossip/"
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
@@ -111,7 +114,7 @@ class World:
         pygame.mixer.Channel(2).stop()
         pygame.mixer.Channel(3).stop()
 
-        self.change_music("assets/audio/bg_day.wav", 0.1)
+        self.change_music(config.ROOT_DIR + "assets/audio/bg_day.wav", 0.1)
 
         self.active_objects = [self.player]
 
@@ -146,7 +149,7 @@ class World:
         self.play_on_next_channel(sound)
 
     def play_attack_sound(self):
-        sound = pygame.mixer.Sound("assets/audio/bite.wav")
+        sound = pygame.mixer.Sound(config.ROOT_DIR + "assets/audio/bite.wav")
         sound.set_volume(0.3)
         self.play_on_next_channel(sound)
 
