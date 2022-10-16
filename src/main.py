@@ -16,9 +16,6 @@ update_wait = 1000 / 30
 halt = False
 last_update = 0
 
-phase = "night"
-phase_timer = 0
-
 world = World()
 
 def process_inputs(prev_keys = None):
@@ -32,8 +29,11 @@ def process_inputs(prev_keys = None):
         world.player.actions.add("right")
     if keys[pygame.K_SPACE] and world.player.grounded == True and not prev_keys[pygame.K_SPACE]:
         world.player.actions.add("jump")
-    if keys[pygame.K_LCTRL] and not prev_keys[pygame.K_LCTRL] and world.player.attack_cool_down == 0:
-        world.player.actions.add("attack")
+    if keys[pygame.K_LCTRL] and not prev_keys[pygame.K_LCTRL]:
+        if world.phase == "night" and world.player.attack_cool_down == 0:
+            world.player.actions.add("attack")
+        if world.phase == "day" and world.player.interrupt_cool_down == 0:
+            world.player.actions.add("interrupt")
 
     return keys
 
@@ -49,13 +49,13 @@ def draw():
     for obj in reversed(world.active_objects):
         obj.draw(screen)
 
+    world.draw_bars(screen)
+
     pygame.display.flip()
 
 def run():
     global halt
     global last_update
-    global phase_timer
-    global phase
 
     pygame.display.set_caption("My Werewolf Neighbour")
     world.start_night()
@@ -67,14 +67,11 @@ def run():
                 pygame.quit()
                 sys.exit()
 
-        if phase_timer >= 15000:
-            if phase == "day":
+        if world.phase_timer >= config.PHASE_DURATION:
+            if world.phase == "day":
                 world.start_night()
-                phase = "night"
-            else:
+            elif world.phase == "night":
                 world.start_day()
-                phase = "day"
-            phase_timer = 0
 
         # update inputs
         prev_keys = process_inputs(prev_keys)
@@ -86,7 +83,7 @@ def run():
             draw()
 
         clock.tick(framerate)
-        phase_timer += clock.get_time()
+        world.phase_timer += clock.get_time()
         # fps = clock.get_fps()
         # pygame.display.set_caption("FPS: " + str(fps))
 

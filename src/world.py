@@ -4,9 +4,10 @@ import random
 
 import config
 from gameobjects.base import Platform
-from gameobjects.citizen import Citizen, Detective
+from gameobjects.citizen import Citizen
 from gameobjects.scenery import Scenery, Building
 from gameobjects.player import Player
+from gameobjects.detective import Detective
 
 ground_level = 150
 
@@ -29,61 +30,23 @@ class World:
         self.citizens = []
         self.citizens.append(self.objects["citizen_miguel"])
         self.citizens.append(self.objects["citizen_mark"])
-        self.citizens.append(Citizen("assets/sprites/citizen_miguel.png", 64, 32))
-        self.citizens.append(Citizen("assets/sprites/citizen_miguel.png", 32, 64))
-        self.citizens.append(Citizen("assets/sprites/citizen_miguel.png", 16, 32))
-        self.citizens.append(Citizen("assets/sprites/citizen_miguel.png", 32, 16))
+        for i in range(8):
+            self.citizens.append(Citizen("assets/sprites/rando_citizen_male.png", 32, 32))
+        
+        for i in range(8):
+            self.citizens.append(Citizen("assets/sprites/rando_citizen_female.png", 32, 32))
 
         self.player = Player()
 
         self.active_objects = [self.player]
 
         self.phase = "night"
+        self.phase_timer = 0
 
         self.next_channel = 1
 
-    def reset_objects(self):
-        for obj in self.active_objects:
-            obj.reset()
-
-    def populate(self, key, x, y, first=False):
-        obj = self.objects[key]
-        obj.x = x
-        obj.y = y
-        if first:
-            self.active_objects.insert(1, obj)
-        else:
-            self.active_objects.append(obj)
-        self.active = True
-
-    def depopulate(self, obj):
-        obj.active = False
-        self.active_objects.remove(obj)
-
-    def start_night(self):
-        self.reset_objects()
-        self.phase = "night"
-
-        pygame.mixer.Channel(1).stop()
-        pygame.mixer.Channel(2).stop()
-        pygame.mixer.Channel(3).stop()
-
-        self.change_music(config.ROOT_DIR + "assets/audio/bg_night.wav", 0.1)
-
-        self.active_objects = [self.player]
-
-        self.populate("moon", 100, 100)
-        self.populate("church", 320, config.GAME_HEIGHT-71-ground_level)
-        self.populate("house1", 100, config.GAME_HEIGHT-48-ground_level)
-        self.populate("house2", 550, config.GAME_HEIGHT-48-ground_level)
-
-        self.populate("grass", config.GAME_WIDTH/2, config.GAME_HEIGHT-ground_level/2)
-        self.populate("dirt", config.GAME_WIDTH/2, config.GAME_HEIGHT-16-ground_level)
-
-        self.populate("night_sky", config.GAME_WIDTH/2, config.GAME_HEIGHT/2)
-
-        self.player.x = 100
-        self.player.y = ground_level-32
+        self.suspicion = 0
+        self.investigation = 0
 
         self.citizen_scared_sounds = []
         folder = config.ROOT_DIR + "assets/audio/citizen_scared/"
@@ -125,9 +88,58 @@ class World:
 
         self.last_detective_investigate_sound = None
 
+    def reset_citizens(self):
+        for citizen in self.citizens:
+            citizen.active = False
+            citizen.reset()
+
+    def populate(self, key, x, y, first=False):
+        obj = self.objects[key]
+        obj.x = x
+        obj.y = y
+        if first:
+            self.active_objects.insert(1, obj)
+        else:
+            self.active_objects.append(obj)
+        self.active = True
+
+    def depopulate(self, obj):
+        obj.active = False
+        self.active_objects.remove(obj)
+
+    def start_night(self):
+        self.phase_timer = 0
+        self.reset_citizens()
+        self.phase = "night"
+        self.player.form = "wolfform"
+        self.player.width = 64
+        self.player.height = 64
+
+        pygame.mixer.Channel(1).stop()
+        pygame.mixer.Channel(2).stop()
+        pygame.mixer.Channel(3).stop()
+
+        self.change_music(config.ROOT_DIR + "assets/audio/bg_night.wav", 0.1)
+
+        self.active_objects = [self.player]
+
+        self.populate("moon", 100, 100)
+        self.populate("church", 320, config.GAME_HEIGHT-71-ground_level)
+        self.populate("house1", 100, config.GAME_HEIGHT-48-ground_level)
+        self.populate("house2", 550, config.GAME_HEIGHT-48-ground_level)
+
+        self.populate("grass", config.GAME_WIDTH/2, config.GAME_HEIGHT-ground_level/2)
+        self.populate("dirt", config.GAME_WIDTH/2, config.GAME_HEIGHT-16-ground_level)
+
+        self.populate("night_sky", config.GAME_WIDTH/2, config.GAME_HEIGHT/2)
+
     def start_day(self):
-        self.reset_objects()
+        self.phase_timer = 0
+        self.reset_citizens()
         self.phase = "day"
+        self.player.form = "humanform"
+        self.player.width = 32
+        self.player.height = 64
 
         pygame.mixer.Channel(1).stop()
         pygame.mixer.Channel(2).stop()
@@ -137,7 +149,8 @@ class World:
 
         self.active_objects = [self.player]
 
-        self.populate("detective", 100, 100)
+        self.objects["detective"] = Detective()
+        self.populate("detective", 500, config.GAME_HEIGHT-48-ground_level)
 
         self.populate("church", 320, config.GAME_HEIGHT-71-ground_level)
         self.populate("house1", 100, config.GAME_HEIGHT-48-ground_level)
@@ -150,6 +163,48 @@ class World:
 
         self.player.x = 100
         self.player.y = ground_level-32
+
+    def game_over(self, reason):
+        self.reset_citizens()
+        self.phase = "game_over"
+        self.player.form = "humanform"
+        self.player.width = 32
+        self.player.height = 64
+
+        pygame.mixer.Channel(1).stop()
+        pygame.mixer.Channel(2).stop()
+        pygame.mixer.Channel(3).stop()
+
+        self.change_music(config.ROOT_DIR + "assets/audio/bg_hum.wav", 0.1)
+
+        self.active_objects = [self.player]
+
+        self.populate("grass", config.GAME_WIDTH/2, config.GAME_HEIGHT-ground_level/2)
+        self.populate("dirt", config.GAME_WIDTH/2, config.GAME_HEIGHT-16-ground_level)
+
+        self.populate("day_sky", config.GAME_WIDTH/2, config.GAME_HEIGHT/2)
+
+        self.player.x = 100
+        self.player.y = ground_level-32
+
+        print("GAME OVER")
+
+    def draw_bars(self, screen):
+        # draw health bar
+        pygame.draw.rect(screen, (255, 0, 0), (0, 0, config.GAME_WIDTH, 10))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 0, int(config.GAME_WIDTH*self.player.hp/100), 10))
+
+        # draw suspicion bar
+        pygame.draw.rect(screen, (255, 0, 0), (0, 10, config.GAME_WIDTH, 10))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 10, int(config.GAME_WIDTH*self.suspicion/100), 10))
+
+        # draw investigation bar
+        pygame.draw.rect(screen, (255, 0, 0), (0, 20, config.GAME_WIDTH, 10))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 20, int(config.GAME_WIDTH*self.investigation/100), 10))
+
+        # draw phase timer
+        pygame.draw.rect(screen, (255, 0, 0), (0, 30, config.GAME_WIDTH, 10))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 30, int(config.GAME_WIDTH*self.phase_timer/config.PHASE_DURATION), 10))
 
     def play_on_next_channel(self, sound):
         pygame.mixer.Channel(self.next_channel).play(sound)

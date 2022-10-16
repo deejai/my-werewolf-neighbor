@@ -6,10 +6,12 @@ import config
 from utilities import fall
 from gameobjects.base import GameObject, death_sprites
 
+gossip_bubble = pygame.image.load(config.ROOT_DIR + "assets/sprites/gossip_bubble.png")
+
 class Citizen(GameObject):
     def __init__(self, image_path, width, height, num_idle_sprites=2):
         super().__init__(width, height)
-        idle_sprite_sheet = pygame.image.load(image_path)
+        idle_sprite_sheet = pygame.image.load(config.ROOT_DIR + image_path)
         self.idle_sprites = []
         for i in range(num_idle_sprites):
             self.idle_sprites.append(idle_sprite_sheet.subsurface((i*32, 0, 32, 32)))
@@ -30,12 +32,13 @@ class Citizen(GameObject):
 
         self.voice_cooldown = 0
 
+        self.gossiping = False
+        self.gossip_duration = 0
+        self.gossip_tick = 0
         self.gossip_cooldown = random.randint(150, 250)
 
         self.dead = False
         self.death_tick = 0
-
-        self.mute_gossip = False
 
     def update(self, world):
         if(self.dead):
@@ -44,6 +47,9 @@ class Citizen(GameObject):
                 self.death_tick = 0
             return
 
+        if(world.phase == "night"):
+            self.gossiping = False
+
         # walk randomly
         if self.direction_cool_down <= 0:
             self.direction = random.choice(["left", "right"])
@@ -51,12 +57,12 @@ class Citizen(GameObject):
         else:
             self.direction_cool_down -= 1
 
-        if self.direction == "left" and self.x > 0:
+        if self.direction == "left" and self.x > self.width/2:
             if(self.run_boost > 0):
                 self.x -= 2
             else:
                 self.x -= 1
-        elif self.direction == "right" and self.x < config.GAME_WIDTH:
+        elif self.direction == "right" and self.x < config.GAME_WIDTH - self.width/2:
             if(self.run_boost > 0):
                 self.x += 2
             else:
@@ -95,9 +101,12 @@ class Citizen(GameObject):
 
                 self.direction_cool_down = 10
 
-        if(world.phase == "day" and self.gossip_cooldown <= 0 and self.mute_gossip == False):
-            self.gossip_cooldown = random.randint(150, 250)
-            world.play_citizen_gossip_sound()
+        # during day time, gossip randomly
+        if(world.phase == "day" and self.gossip_cooldown <= 0):
+            if(random.random() < 0.1):
+                self.gossiping = True
+                self.gossip_duration = 50
+                self.gossip_cooldown = 50 + random.randint(0, 100)
 
     def get_bitten(self, world):
         self.dead = True
@@ -109,6 +118,10 @@ class Citizen(GameObject):
             self.death_tick += 1
             return
 
+        if(self.gossiping):
+            # draw gossip bubble above head
+            screen.blit(gossip_bubble, (self.x+self.width/4, self.y-self.height/2 - 20))
+
         current_sprite_index = int(self.animation_tick / self.frame_duration)
         current_sprite = self.sprites[current_sprite_index]
         image = pygame.transform.scale(current_sprite, (self.width, self.height))
@@ -118,39 +131,12 @@ class Citizen(GameObject):
 
         self.animation_tick = (self.animation_tick + 1) % (len(self.sprites) * self.frame_duration)
 
-class Detective(Citizen):
-    def __init__(self):
-        super().__init__("assets/sprites/detective_idle.png", 32, 32, num_idle_sprites=4)
-        self.mute_gossip = True
-        self.investigating = False
-
-        self.investigate_sprites = []
-        investigate_sprite_sheet = pygame.image.load("assets/sprites/detective_investigate.png")
-        for i in range(4):
-            self.investigate_sprites.append(investigate_sprite_sheet.subsurface((i*32, 0, 32, 32)))
-
-    def update(self, world):
-        super().update(world)
-
-        if(world.player.x > self.x):
-            self.direction = "right"
-            self.x += 1
-        else:
-            self.direction = "left"
-            self.x -= 1
-
-        # if the player is very close, start investigating and play an "investigate" sound
-        if(math.sqrt(math.pow(world.player.x - self.x, 2) + math.pow(world.player.y - self.y, 2)) < 75):
-            if self.voice_cooldown <= 0:
-                world.play_detective_investigate_sound()
-                self.voice_cooldown = 100
-
-            self.investigating = True
-            self.sprites = self.investigate_sprites
-
-        # if the player is close, but not too close, play a "notice" sound
-        elif(math.sqrt(math.pow(world.player.x - self.x, 2) + math.pow(world.player.y - self.y, 2)) < 200):
-            if self.voice_cooldown <= 0:
-                world.play_detective_notice_sound()
-                self.voice_cooldown = 100
-
+    def reset(self):
+        super().reset()
+        self.animation_tick = 0
+        self.run_boost_cool_down = 0
+        self.direction_cool_down = 0
+        self.voice_cooldown = 0
+        self.gossip_cooldown = random.randint(10, 100)
+        self.goosiping = False
+        self.gossip_tick = 0

@@ -4,7 +4,7 @@ import random
 
 import config
 
-death_sprite_sheet = pygame.image.load("assets/sprites/bone_splat.png")
+death_sprite_sheet = pygame.image.load(config.ROOT_DIR + "assets/sprites/bone_splat.png")
 death_sprites = []
 for i in range(0, 4):
     death_sprites.append(death_sprite_sheet.subsurface(i*32, 0, 32, 32))
@@ -29,7 +29,7 @@ class GameObject:
 class Platform(GameObject):
     def __init__(self, image_path, width, height):
         super().__init__(width, height)
-        image = pygame.image.load(image_path)
+        image = pygame.image.load(config.ROOT_DIR + image_path)
         self.image = pygame.transform.scale(image, (self.width, self.height))
         self.platform = True
 
