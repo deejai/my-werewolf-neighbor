@@ -25,3 +25,5 @@ https://itch.io/jam/pyjamv1
 - [Corndog](https://www.instagram.com/condor__k/) - Sprites, Voice Acting
 - Sam - Voice Acting
 - Me - Programming, Sprites
+- Miguel - Likeness
+- Mark - Likeness

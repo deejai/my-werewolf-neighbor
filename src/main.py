@@ -67,7 +67,7 @@ def run():
                 pygame.quit()
                 sys.exit()
 
-        if phase_timer >= 5000:
+        if phase_timer >= 15000:
             if phase == "day":
                 world.start_night()
                 phase = "night"
