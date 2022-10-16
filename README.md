@@ -6,6 +6,8 @@
 
 This game is my entry for pyjam 10/16/2022
 
+Current Status: **In development**
+
 https://itch.io/jam/pyjamv1
 
 ### Running the game
