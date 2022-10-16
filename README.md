@@ -1,6 +1,7 @@
 # My Werewolf Neighbor
 
-<img src="teaser.png" width="640px">
+<img src="teaser_day.png" width="640px">
+<img src="teaser_night.png" width="640px">
 
 ### Game Jam
 
