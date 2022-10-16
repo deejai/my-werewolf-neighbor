@@ -107,6 +107,10 @@ class Citizen(GameObject):
                 self.gossiping = True
                 self.gossip_duration = 50
                 self.gossip_cooldown = 50 + random.randint(0, 100)
+                
+                if(self.voice_cooldown <= 0):
+                    world.play_citizen_gossip_sound()
+                    self.voice_cooldown = 100
 
     def get_bitten(self, world):
         self.dead = True

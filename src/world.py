@@ -8,6 +8,7 @@ from gameobjects.citizen import Citizen
 from gameobjects.scenery import Scenery, Building
 from gameobjects.player import Player
 from gameobjects.detective import Detective
+from gameobjects.hunter import Hunter
 
 ground_level = 150
 
@@ -63,7 +64,7 @@ class World:
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
-                sound.set_volume(0.8)
+                sound.set_volume(0.5)
                 self.citizen_gossip_sounds.append(sound)
 
         self.last_citizen_gossip_sound = None
@@ -73,7 +74,7 @@ class World:
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
-                sound.set_volume(0.8)
+                sound.set_volume(0.5)
                 self.detective_notice_sounds.append(sound)
 
         self.last_detective_notice_sound = None
@@ -83,10 +84,30 @@ class World:
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
-                sound.set_volume(0.8)
+                sound.set_volume(0.6)
                 self.detective_investigate_sounds.append(sound)
 
         self.last_detective_investigate_sound = None
+
+        self.hunter_taunt_sounds = []
+        folder = config.ROOT_DIR + "assets/audio/hunter_taunt/"
+        for file in os.listdir(folder):
+            if file.endswith(".wav"):
+                sound = pygame.mixer.Sound(folder + file)
+                sound.set_volume(0.6)
+                self.hunter_taunt_sounds.append(sound)
+
+        self.last_hunter_taunt_sound = None
+
+        self.werewolf_hurt_sounds = []
+        folder = config.ROOT_DIR + "assets/audio/werewolf_hurt/"
+        for file in os.listdir(folder):
+            if file.endswith(".wav"):
+                sound = pygame.mixer.Sound(folder + file)
+                sound.set_volume(0.8)
+                self.werewolf_hurt_sounds.append(sound)
+
+        self.last_werewolf_hurt_sound = None
 
     def reset_citizens(self):
         for citizen in self.citizens:
@@ -122,6 +143,9 @@ class World:
         self.change_music(config.ROOT_DIR + "assets/audio/bg_night.wav", 0.1)
 
         self.active_objects = [self.player]
+
+        self.objects["hunter"] = Hunter()
+        self.populate("hunter", 500, config.GAME_HEIGHT-48-ground_level)
 
         self.populate("moon", 100, 100)
         self.populate("church", 320, config.GAME_HEIGHT-71-ground_level)
@@ -215,30 +239,39 @@ class World:
     def play_citizen_scared_sound(self):
         sound = random.choice([s for s in self.citizen_scared_sounds if s != self.last_citizen_scared_sound])
         self.last_citizen_scared_sound = sound
-        sound.set_volume(0.5)
         self.play_on_next_channel(sound)
 
     def play_citizen_gossip_sound(self):
         sound = random.choice([s for s in self.citizen_gossip_sounds if s != self.last_citizen_gossip_sound])
         self.last_citizen_gossip_sound = sound
-        sound.set_volume(0.5)
         self.play_on_next_channel(sound)
 
     def play_detective_notice_sound(self):
         sound = random.choice([s for s in self.detective_notice_sounds if s != self.last_detective_notice_sound])
         self.last_detective_notice_sound = sound
-        sound.set_volume(0.5)
         self.play_on_next_channel(sound)
 
     def play_detective_investigate_sound(self):
         sound = random.choice([s for s in self.detective_investigate_sounds if s != self.last_detective_investigate_sound])
         self.last_detective_investigate_sound = sound
-        sound.set_volume(0.5)
         self.play_on_next_channel(sound)
 
     def play_attack_sound(self):
         sound = pygame.mixer.Sound(config.ROOT_DIR + "assets/audio/bite.wav")
-        sound.set_volume(0.3)
+        self.play_on_next_channel(sound)
+
+    def play_hunter_taunt_sound(self):
+        sound = random.choice([s for s in self.hunter_taunt_sounds if s != self.last_hunter_taunt_sound])
+        self.last_hunter_taunt_sound = sound
+        self.play_on_next_channel(sound)
+
+    def play_gunshot_sound(self):
+        sound = pygame.mixer.Sound(config.ROOT_DIR + "assets/audio/shoot.wav")
+        self.play_on_next_channel(sound)
+
+    def play_werewolf_hurt_sound(self):
+        sound = random.choice([s for s in self.werewolf_hurt_sounds if s != self.last_werewolf_hurt_sound])
+        self.last_werewolf_hurt_sound = sound
         self.play_on_next_channel(sound)
 
     def change_music(self, filepath, volume=1.0):

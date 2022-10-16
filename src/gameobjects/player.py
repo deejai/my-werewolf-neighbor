@@ -137,18 +137,23 @@ class Player(GameObject):
             # play attack sound
             world.play_attack_sound()
 
+            closest_target = None
             if(self.direction == "right"):
                 for obj in world.active_objects:
                     if(obj.x > self.x and obj.x < self.x + 100 and obj.y > self.y - 50 and obj.y < self.y + 50):
                         if(hasattr(obj, "get_bitten")):
-                            obj.get_bitten(world)
+                            if(closest_target == None or obj.x < closest_target.x):
+                                closest_target = obj
 
-            if(self.direction == "left"):
+            elif(self.direction == "left"):
                 for obj in world.active_objects:
                     if(obj.x < self.x and obj.x > self.x - 100 and obj.y > self.y - 50 and obj.y < self.y + 50):
                         if(hasattr(obj, "get_bitten")):
-                            obj.get_bitten(world)
+                            if(closest_target == None or obj.x > closest_target.x):
+                                closest_target = obj
 
+            if(closest_target != None):
+                closest_target.get_bitten(world)
 
         if self.grounded == False:
             self.y_velocity += config.GRAVITY
