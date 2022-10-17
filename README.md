@@ -22,7 +22,9 @@ https://itch.io/jam/pyjamv1
 
 ### Compile Binary (Windows)
 
-- `pyinstaller.exe --onefile --paths= (__PATH__TO__) __\pyjam\src src\main.py`
+- `pyinstaller.exe --onefile --paths=[path to \pyjam\src] src\main.py`
+
+Replace `[path to \pyjam\src]` with the path to the src folder of the game.
 
 ### Contributors
 
