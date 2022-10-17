@@ -49,6 +49,8 @@ class World:
         self.suspicion = 0
         self.investigation = 0
 
+        self.game_over_reason = ""
+
         self.citizen_scared_sounds = []
         folder = config.ROOT_DIR + "assets/audio/citizen_scared/"
         for file in os.listdir(folder):
@@ -94,7 +96,7 @@ class World:
         for file in os.listdir(folder):
             if file.endswith(".wav"):
                 sound = pygame.mixer.Sound(folder + file)
-                sound.set_volume(0.6)
+                sound.set_volume(0.3)
                 self.hunter_taunt_sounds.append(sound)
 
         self.last_hunter_taunt_sound = None
@@ -108,6 +110,16 @@ class World:
                 self.werewolf_hurt_sounds.append(sound)
 
         self.last_werewolf_hurt_sound = None
+
+        self.interrupt_sounds = []
+        folder = config.ROOT_DIR + "assets/audio/player_gaslight/"
+        for file in os.listdir(folder):
+            if file.endswith(".wav"):
+                sound = pygame.mixer.Sound(folder + file)
+                sound.set_volume(0.6)
+                self.interrupt_sounds.append(sound)
+
+        self.last_interrupt_sound = None
 
     def reset_citizens(self):
         for citizen in self.citizens:
@@ -136,9 +148,7 @@ class World:
         self.player.width = 64
         self.player.height = 64
 
-        pygame.mixer.Channel(1).stop()
-        pygame.mixer.Channel(2).stop()
-        pygame.mixer.Channel(3).stop()
+        self.stop_audio_channels()
 
         self.change_music(config.ROOT_DIR + "assets/audio/bg_night.wav", 0.1)
 
@@ -165,9 +175,7 @@ class World:
         self.player.width = 32
         self.player.height = 64
 
-        pygame.mixer.Channel(1).stop()
-        pygame.mixer.Channel(2).stop()
-        pygame.mixer.Channel(3).stop()
+        self.stop_audio_channels()
 
         self.change_music(config.ROOT_DIR + "assets/audio/bg_day.wav", 0.1)
 
@@ -188,6 +196,10 @@ class World:
         self.player.x = 100
         self.player.y = ground_level-32
 
+    def stop_audio_channels(self):
+        for i in range(1, 5+1):
+            pygame.mixer.Channel(i).stop()
+
     def game_over(self, reason):
         self.reset_citizens()
         self.phase = "game_over"
@@ -195,13 +207,13 @@ class World:
         self.player.width = 32
         self.player.height = 64
 
-        pygame.mixer.Channel(1).stop()
-        pygame.mixer.Channel(2).stop()
-        pygame.mixer.Channel(3).stop()
+        self.stop_audio_channels()
 
         self.change_music(config.ROOT_DIR + "assets/audio/bg_hum.wav", 0.1)
 
-        self.active_objects = [self.player]
+        self.game_over_reason = reason
+
+        self.active_objects = []
 
         self.populate("grass", config.GAME_WIDTH/2, config.GAME_HEIGHT-ground_level/2)
         self.populate("dirt", config.GAME_WIDTH/2, config.GAME_HEIGHT-16-ground_level)
@@ -214,26 +226,22 @@ class World:
         print("GAME OVER")
 
     def draw_bars(self, screen):
-        # draw health bar
-        pygame.draw.rect(screen, (255, 0, 0), (0, 0, config.GAME_WIDTH, 10))
-        pygame.draw.rect(screen, (0, 255, 0), (0, 0, int(config.GAME_WIDTH*self.player.hp/100), 10))
-
         # draw suspicion bar
-        pygame.draw.rect(screen, (255, 0, 0), (0, 10, config.GAME_WIDTH, 10))
-        pygame.draw.rect(screen, (0, 255, 0), (0, 10, int(config.GAME_WIDTH*self.suspicion/100), 10))
+        pygame.draw.rect(screen, (150, 150, 150), (0, 0, config.GAME_WIDTH, 20))
+        pygame.draw.rect(screen, (0, 155, 255), (0, 10, int(config.GAME_WIDTH*self.suspicion/100), 10))
 
-        # draw investigation bar
-        pygame.draw.rect(screen, (255, 0, 0), (0, 20, config.GAME_WIDTH, 10))
-        pygame.draw.rect(screen, (0, 255, 0), (0, 20, int(config.GAME_WIDTH*self.investigation/100), 10))
-
-        # draw phase timer
-        pygame.draw.rect(screen, (255, 0, 0), (0, 30, config.GAME_WIDTH, 10))
-        pygame.draw.rect(screen, (0, 255, 0), (0, 30, int(config.GAME_WIDTH*self.phase_timer/config.PHASE_DURATION), 10))
+        # draw phase timer in the sky
+        if self.phase == "night":
+            pygame.draw.rect(screen, (0, 0, 0), (0, 0, config.GAME_WIDTH, 10))
+            pygame.draw.rect(screen, (255, 255, 255), (0, 0, int(config.GAME_WIDTH*self.phase_timer/config.PHASE_DURATION), 10))
+        elif self.phase == "day":
+            pygame.draw.rect(screen, (0, 0, 0), (0, 0, config.GAME_WIDTH, 10))
+            pygame.draw.rect(screen, (255, 255, 255), (0, 0, int(config.GAME_WIDTH*self.phase_timer/config.PHASE_DURATION), 10))
 
     def play_on_next_channel(self, sound):
         pygame.mixer.Channel(self.next_channel).play(sound)
         self.next_channel += 1
-        if self.next_channel > 3:
+        if self.next_channel > 5:
             self.next_channel = 1
 
     def play_citizen_scared_sound(self):
@@ -267,11 +275,17 @@ class World:
 
     def play_gunshot_sound(self):
         sound = pygame.mixer.Sound(config.ROOT_DIR + "assets/audio/shoot.wav")
+        sound.set_volume(0.5)
         self.play_on_next_channel(sound)
 
     def play_werewolf_hurt_sound(self):
         sound = random.choice([s for s in self.werewolf_hurt_sounds if s != self.last_werewolf_hurt_sound])
         self.last_werewolf_hurt_sound = sound
+        self.play_on_next_channel(sound)
+
+    def play_interrupt_sound(self):
+        sound = random.choice([s for s in self.interrupt_sounds if s != self.last_interrupt_sound])
+        self.last_interrupt_sound = sound
         self.play_on_next_channel(sound)
 
     def change_music(self, filepath, volume=1.0):
@@ -280,3 +294,18 @@ class World:
         pygame.mixer.music.load(filepath)
         pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(loops=-1, start=0.0, fade_ms=1000)
+
+    def reset(self):
+        self.phase = "night"
+        # revive all citizens
+        for citizen in self.citizens:
+            citizen.dead = False
+            citizen.reset()
+
+        # set player hp to 100
+        self.player.hp = 100
+
+        # reset suspicion
+        self.suspicion = 0
+
+        self.start_night()

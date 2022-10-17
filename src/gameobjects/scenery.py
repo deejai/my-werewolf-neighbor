@@ -28,8 +28,8 @@ class Building(Scenery):
                 return
             citizen = random.choice(inactive_citizen)
             if(citizen):
-                citizen.active = True
                 citizen.reset()
+                citizen.active = True
                 key_num = 0
                 key = f"rando_citizen_{key_num}"
 

@@ -11,7 +11,7 @@ class Bullet(GameObject):
         self.direction = direction
         self.sprite = pygame.image.load(config.ROOT_DIR + "assets/sprites/silver_bullet.png")
         self.speed = 10
-        self.damage = 10
+        self.damage = 30
 
     def update(self, world):
         super().update(world)

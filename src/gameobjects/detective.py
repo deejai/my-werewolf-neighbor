@@ -21,7 +21,7 @@ class Detective(GameObject):
         self.following = False
         self.follow_cooldown = 0
         self.follow_tick = 0
-        self.follow_duration = 30
+        self.follow_duration = 35
 
         self.investigating = False
         self.investigate_cooldown = 0
@@ -48,7 +48,7 @@ class Detective(GameObject):
 
         if(self.investigating):
             if(self.investigate_tick >= self.investigate_duration):
-                world.game_over("investigated")
+                world.suspicion += 2
             else:
                 self.investigate_tick += 1
         else:
@@ -58,7 +58,6 @@ class Detective(GameObject):
             if(self.follow_tick >= self.follow_duration):
                 self.following = False
                 self.follow_tick = 0
-                self.follow_duration = 0
             else:
                 self.follow_tick += 1
                 if(math.sqrt(math.pow(world.player.x - self.x, 2) + math.pow(world.player.y - self.y, 2)) > 25):
@@ -69,7 +68,7 @@ class Detective(GameObject):
 
 
         # if the player is close, but not too close, play a "notice" sound and start following the player
-        if(math.sqrt(math.pow(world.player.x - self.x, 2) + math.pow(world.player.y - self.y, 2)) < 200):
+        if(math.sqrt(math.pow(world.player.x - self.x, 2) + math.pow(world.player.y - self.y, 2)) < 250):
             if self.voice_cooldown <= 0:
                 world.play_detective_notice_sound()
                 self.voice_cooldown = 100

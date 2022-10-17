@@ -78,7 +78,7 @@ class Player(GameObject):
         self.attack_cool_down = 0
 
         self.interrupting = False
-        self.interrupt_duration = 5
+        self.interrupt_duration = 10
         self.interrupt_frame = 0
         self.interrupt_cool_down = 0
 
@@ -88,8 +88,26 @@ class Player(GameObject):
         self.sprites = self.sprite_sets[self.form]["idle"]
 
     def update(self, world):
+        if self.hp <= 0:
+            world.game_over("slain")
+            return
+
+        print(f"{self.interrupt_cool_down} {self.interrupting} {self.interrupt_frame}")
+
+        if self.interrupting:
+            if self.interrupt_frame < self.interrupt_duration:
+                sprite_index = int((self.interrupt_frame / self.interrupt_duration) * len(self.sprite_sets["humanform"]["interrupt"]))
+                self.sprites = self.sprite_sets["humanform"]["interrupt"][sprite_index]
+                self.interrupt_frame += 1
+            else:
+                self.interrupt_frame = 0
+                self.interrupting = False
+
         if self.jump_cooldown > 0:
             self.jump_cooldown -= 1
+
+        if self.interrupt_cool_down > 0:
+            self.interrupt_cool_down -= 1
 
         new_x = self.x
         new_y = self.y
@@ -155,6 +173,19 @@ class Player(GameObject):
             if(closest_target != None):
                 closest_target.get_bitten(world)
 
+        if "interrupt" in self.actions and self.interrupt_cool_down == 0:
+            self.interrupting = True
+            self.interrupt_frame = 0
+            self.interrupt_cool_down = 35
+
+            world.play_interrupt_sound()
+
+            # stop citizens in front of player from gossiping
+            for obj in world.active_objects:
+                if(obj.x > self.x and obj.x < self.x + 100 and obj.y > self.y - 50 and obj.y < self.y + 50):
+                    if(hasattr(obj, "gossiping")):
+                        obj.gossiping = False
+
         if self.grounded == False:
             self.y_velocity += config.GRAVITY
             new_y += self.y_velocity
@@ -182,12 +213,26 @@ class Player(GameObject):
                 self.attack_frame = 0
                 self.attacking = False
 
+        if self.interrupting:
+            if self.interrupt_frame < self.interrupt_duration:
+                sprite_index = int((self.interrupt_frame / self.interrupt_duration) * len(self.sprite_sets["humanform"]["interrupt"]))
+                image = self.sprite_sets["humanform"]["interrupt"][sprite_index]
+                self.interrupt_frame += 1
+            else:
+                self.interrupt_frame = 0
+                self.interrupting = False
+                self.sprites = self.sprite_sets[self.form]["idle"]
+
         image = pygame.transform.scale(image, (self.width, self.height))
 
         if self.direction == "left":
             image = pygame.transform.flip(image, True, False)
 
         screen.blit(image, (self.x-self.width/2, self.y-self.height/2))
+
+        # draw health bar above player
+        pygame.draw.rect(screen, (255, 0, 0), (self.x-self.width/2, self.y-self.height/2 - 10, self.width, 5))
+        pygame.draw.rect(screen, (0, 255, 0), (self.x-self.width/2, self.y-self.height/2 - 10, self.width * (self.hp / 100), 5))
         
         if config.DEBUG:
             pygame.draw.rect(screen, (255, 0, 0), (self.x-self.width/2, self.y-self.height/2, self.width, self.height), 2)

@@ -102,7 +102,7 @@ class Citizen(GameObject):
                 self.direction_cool_down = 10
 
         # during day time, gossip randomly
-        if(world.phase == "day" and self.gossip_cooldown <= 0):
+        if(world.phase == "day" and self.gossip_cooldown <= 0 and self.gossiping == False):
             if(random.random() < 0.1):
                 self.gossiping = True
                 self.gossip_duration = 50
@@ -111,6 +111,9 @@ class Citizen(GameObject):
                 if(self.voice_cooldown <= 0):
                     world.play_citizen_gossip_sound()
                     self.voice_cooldown = 100
+
+        if(self.gossiping):
+            world.suspicion = min(world.suspicion + 0.01, config.SUSPICION_THRESHOLD)
 
     def get_bitten(self, world):
         self.dead = True

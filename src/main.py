@@ -35,6 +35,9 @@ def process_inputs(prev_keys = None):
         if world.phase == "day" and world.player.interrupt_cool_down == 0:
             world.player.actions.add("interrupt")
 
+    if keys[pygame.K_SPACE] and world.phase == "game_over":
+        world.reset()
+
     return keys
 
 def update():
@@ -43,6 +46,13 @@ def update():
 
     world.player.actions.clear()
 
+    # if all of the citizens are dead, end the game
+    if len([c for c in world.citizens if c.dead == False]) == 0:
+        world.game_over("victory")
+        
+    if world.suspicion >= config.SUSPICION_THRESHOLD:
+        world.game_over("defeat")
+
 def draw():
     screen.fill((40, 0, 40))
 
@@ -50,6 +60,33 @@ def draw():
         obj.draw(screen)
 
     world.draw_bars(screen)
+
+    text_str = ""
+    font = pygame.font.SysFont("Arial", 20)
+
+    if world.game_over_reason != "":
+        reason_str = world.game_over_reason
+        if reason_str == "victory":
+            # write "You have killed all the citizens!"
+            text_str = "You have killed all the citizens!"
+        elif reason_str == "discovered":
+            # write "You have been discovered!"
+            text_str = "You have been discovered!"
+        elif reason_str == "slain":
+            # write "You have been slain!"
+            text_str = "You have been slain!"
+
+        text_str += " Press space to restart."
+    else:
+        # draw remaining citizens
+        text_str = f"Citizens Remaining: {len([c for c in world.citizens if c.dead == False])}"
+
+    text = font.render(text_str, True, (255, 255, 255))
+    # add a background to the text
+    text_bg = pygame.Surface((text.get_width() + 10, text.get_height() + 10))
+    text_bg.fill((20, 90, 90))
+    screen.blit(text_bg, (50-5, 400-5))
+    screen.blit(text, (50, 400))
 
     pygame.display.flip()
 
