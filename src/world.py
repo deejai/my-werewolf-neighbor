@@ -308,4 +308,7 @@ class World:
         # reset suspicion
         self.suspicion = 0
 
+        # reset gameover reason
+        self.game_over_reason = ""
+
         self.start_night()
