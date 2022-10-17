@@ -20,6 +20,10 @@ https://itch.io/jam/pyjamv1
 - run `python -m pip install -r requirements.txt`
 - run `python src/main.py`
 
+### Compile Binary (Windows)
+
+- `pyinstaller.exe --onefile --paths=C:\Users\Deeja\OneDrive\Desktop\pyjam\src src\main.py`
+
 ### Contributors
 
 - Urk - Music
