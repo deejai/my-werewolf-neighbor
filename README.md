@@ -22,7 +22,7 @@ https://itch.io/jam/pyjamv1
 
 ### Compile Binary (Windows)
 
-- `pyinstaller.exe --onefile --paths=C:\Users\Deeja\OneDrive\Desktop\pyjam\src src\main.py`
+- `pyinstaller.exe --onefile --paths= (__PATH__TO__) __\pyjam\src src\main.py`
 
 ### Contributors
 
