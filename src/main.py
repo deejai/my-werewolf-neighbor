@@ -51,7 +51,7 @@ def update():
         world.game_over("victory")
         
     if world.suspicion >= config.SUSPICION_THRESHOLD:
-        world.game_over("defeat")
+        world.game_over("discovered")
 
 def draw():
     screen.fill((40, 0, 40))
